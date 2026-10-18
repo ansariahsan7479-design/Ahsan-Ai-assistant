@@ -140,41 +140,46 @@
     <div class="chat-box" id="chatBox">
         <div class="msg ai-msg">
             <div class="ai-name">Ahsan Assistant AI</div>
-            Namaste! Kaise hain aap Ahsan bhai? Main aapki kaise madad kar sakta hoon?
+            Namaste! Main Ahsan bhai ka personal AI assistant hoon. Boliye main aapki kya madad karoon?
         </div>
     </div>
 
     <div class="controls">
         <button class="btn-mic" onclick="startMic()">Mic</button>
-        <input type="text" id="userInput" class="input-box" placeholder="Ask anything...">
+        <input type="text" id="userInput" class="input-box" placeholder="Ask anything..." onkeypress="handleKeyPress(event)">
         <button class="btn-send" onclick="sendMessage()">Send</button>
     </div>
 
     <script>
         let synth = window.speechSynthesis;
 
-        // Force speech engine voices to load
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = () => synth.getVoices();
+        // Load voices for speech
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = () => synth.getVoices();
         }
 
         function speakText(text) {
             if (!synth) return;
-            
-            synth.cancel(); // Clear any previous speech queue
+            synth.cancel(); // Stop any ongoing speech
 
             let utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'hi-IN'; // Hindi voice
+            utterance.lang = 'hi-IN'; // Hindi voice support
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
 
             let voices = synth.getVoices();
-            let selectedVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('IN'));
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
+            let hindiVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('IN'));
+            if (hindiVoice) {
+                utterance.voice = hindiVoice;
             }
 
             synth.speak(utterance);
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
         }
 
         function sendMessage() {
@@ -185,12 +190,12 @@
             addMessage(text, 'user-msg');
             input.value = '';
 
-            // AI Reply Logic
+            // AI intelligent response simulation
             setTimeout(() => {
-                let reply = getAIReply(text);
+                let reply = getSmartReply(text);
                 addMessage(reply, 'ai-msg', true);
-                speakText(reply);
-            }, 600);
+                speakText(reply); // Yeh function ab bol kar bhi sunayega!
+            }, 500);
         }
 
         function addMessage(text, className, isAI = false) {
@@ -208,23 +213,25 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        function getAIReply(query) {
+        function getSmartReply(query) {
             let q = query.toLowerCase();
-            if (q.includes('hi') || q.includes('hello')) {
-                return "Haan Ahsan bhai! Bolo kya haal hain?";
-            } else if (q.includes('kaise ho')) {
-                return "Main bilkul mast hoon Ahsan bhai, aap bataiye!";
-            } else if (q.includes('kaun ho')) {
-                return "Main Ahsan bhai ka personal AI assistant hoon!";
+            if (q.includes('hi') || q.includes('hello') || q.includes('salam')) {
+                return "Salam Ahsan bhai! Kaise hain aap? Sab theek-thaak?";
+            } else if (q.includes('kaise ho') || q.includes('kya haal')) {
+                return "Main ekdum badiya hoon Ahsan bhai, aap bataiye aap kaise hain?";
+            } else if (q.includes('tum kaun ho') || q.includes('who are you')) {
+                return "Main Ahsan Assistant AI hoon, jise Ahsan bhai ne Telkathu me banaya hai!";
+            } else if (q.includes('telkathu')) {
+                return "Telkathu hamari hi jagah hai, aur Ahsan bhai yahan ke genius developer hain!";
             } else {
-                return "Aapka message mil gaya hai Ahsan bhai, main ispar kaam kar raha hoon!";
+                return "Aapne bilkul theek kaha Ahsan bhai, main aapke har hukum par taiyar hoon!";
             }
         }
 
         function startMic() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                alert("Mic aapke browser me support nahi kar raha hai.");
+                alert("Aapka device voice recognition support nahi karta.");
                 return;
             }
 
@@ -238,6 +245,13 @@
                 sendMessage();
             };
         }
+
+        // Welcome speech when app opens
+        window.onload = function() {
+            setTimeout(() => {
+                speakText("Namaste! Main Ahsan Assistant AI hoon.");
+            }, 1000);
+        };
     </script>
 </body>
 </html>
