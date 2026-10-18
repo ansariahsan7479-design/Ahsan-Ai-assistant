@@ -71,6 +71,8 @@
             flex-direction: column;
             width: 100%;
         }
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
 
         #welcomeScreen {
             margin: auto;
@@ -108,9 +110,9 @@
         }
 
         @keyframes geminiFloat { 
-            0% { transform: translateY(0px) scale(0.95); } 
-            50% { transform: translateY(-10px) scale(1.1); } 
-            100% { transform: translateY(0px) scale(0.95); } 
+            0% { transform: translateY(0px) scale(0.95) rotate(0deg); } 
+            50% { transform: translateY(-10px) scale(1.1) rotate(5deg); } 
+            100% { transform: translateY(0px) scale(0.95) rotate(0deg); } 
         }
         
         .chamakdar { background: linear-gradient(to right, #38bdf8, #c084fc, #f472b6); -webkit-background-clip: text; color: transparent; font-weight: 800; }
@@ -308,7 +310,7 @@
             }
         }
 
-        function getLocalReply(text) {
+        function getSmartReply(text) {
             var q = text.toLowerCase();
             if(q.indexOf('kaun') !== -1 || q.indexOf('kisne') !== -1 || q.indexOf('banaya') !== -1 || q.indexOf('who made') !== -1) {
                 return "Mujhe banaye hai Ahsan bhai Telkathu ke rahne wale ne, unhone hi mujhe 16 October 2026 me banaye the.";
@@ -316,6 +318,8 @@
                 return "Salam Ahsan bhai! Kaise hain aap?";
             } else if(q.indexOf('kaise ho') !== -1) {
                 return "Main bilkul mast hoon Ahsan bhai, aap bataiye!";
+            } else if(q.indexOf('image') !== -1 || q.indexOf('photo') !== -1 || q.indexOf('bana do') !== -1) {
+                return "IMAGE_GEN";
             } else {
                 return "Main aapki har baat samajh raha hoon Ahsan bhai, bataiye kya karna hai!";
             }
@@ -337,8 +341,9 @@
             appendMsg(text, 'user');
             input.value = '';
 
-            var lower = text.toLowerCase();
-            if(lower.indexOf('image') !== -1 || lower.indexOf('photo') !== -1 || lower.indexOf('bana do') !== -1) {
+            var reply = getSmartReply(text);
+
+            if(reply === "IMAGE_GEN") {
                 var loadId = appendMsg('Generating HD Image...', 'ai');
                 setTimeout(function() {
                     var lEl = document.getElementById(loadId);
@@ -347,12 +352,15 @@
                     var imgHtml = 'Yeh lijiye aapki HD image:<br><br><img src="' + url + '" style="border-radius: 12px; width: 100%; border: 1px solid #334155;">';
                     appendMsg(imgHtml, 'ai', true, "Yeh lijiye aapki HD image taiyar hai!");
                 }, 1500);
-                return;
+            } else {
+                var loadId = appendMsg('Thinking...', 'ai');
+                setTimeout(function() {
+                    var lEl = document.getElementById(loadId);
+                    if(lEl) lEl.remove();
+                    var formattedText = reply.replace(/(Ahsan)/gi, '<span class="chamakdar">$1</span>');
+                    appendMsg(formattedText, 'ai', true, reply);
+                }, 400);
             }
-
-            var reply = getLocalReply(text);
-            var formattedText = reply.replace(/(Ahsan)/gi, '<span class="chamakdar">$1</span>');
-            appendMsg(formattedText, 'ai', true, reply);
         }
 
         function appendMsg(text, sender, isHtml, speechText) {
@@ -388,4 +396,4 @@
         };
     </script>
 </body>
-    </html>
+</html>
