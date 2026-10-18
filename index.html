@@ -25,9 +25,6 @@
 
         .hidden { display: none !important; }
         .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .items-center { align-items: center; }
-        .justify-between { justify-content: space-between; }
         .gap-2 { gap: 10px; }
 
         header {
@@ -74,8 +71,6 @@
             flex-direction: column;
             width: 100%;
         }
-        .chat-container::-webkit-scrollbar { width: 4px; }
-        .chat-container::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
 
         #welcomeScreen {
             margin: auto;
@@ -113,9 +108,9 @@
         }
 
         @keyframes geminiFloat { 
-            0% { transform: translateY(0px) scale(0.95) rotate(0deg); } 
-            50% { transform: translateY(-10px) scale(1.1) rotate(5deg); } 
-            100% { transform: translateY(0px) scale(0.95) rotate(0deg); } 
+            0% { transform: translateY(0px) scale(0.95); } 
+            50% { transform: translateY(-10px) scale(1.1); } 
+            100% { transform: translateY(0px) scale(0.95); } 
         }
         
         .chamakdar { background: linear-gradient(to right, #38bdf8, #c084fc, #f472b6); -webkit-background-clip: text; color: transparent; font-weight: 800; }
@@ -141,7 +136,6 @@
             color: #ffffff;
             outline: none;
         }
-        .input-field:focus { border-color: #06b6d4; }
 
         .btn-action {
             padding: 10px 16px;
@@ -184,33 +178,7 @@
             font-size: 12px;
             cursor: pointer;
             margin-top: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
             font-weight: bold;
-        }
-
-        .ai-title-header {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 4px;
-        }
-        .mini-star {
-            width: 16px;
-            height: 16px;
-            background: linear-gradient(135deg, #38bdf8, #f472b6);
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 8px #38bdf8;
-            animation: miniGlow 1.8s infinite ease-in-out;
-        }
-        @keyframes miniGlow {
-            0% { transform: scale(0.9); }
-            50% { transform: scale(1.15); box-shadow: 0 0 12px #f472b6; }
-            100% { transform: scale(0.9); }
         }
     </style>
 </head>
@@ -275,7 +243,7 @@
 
         function toggleVoice() {
             var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if(!SR) { alert('Mic permission or Web Speech API not supported.'); return; }
+            if(!SR) { alert('Mic permission or Speech API not supported'); return; }
             if(!recognition) {
                 recognition = new SR();
                 recognition.lang = 'hi-IN';
@@ -289,7 +257,6 @@
             }
             if(isRec) { recognition.stop(); stopRecUI(); }
             else {
-                stopAudio();
                 try { recognition.start(); isRec = true; document.getElementById('micBtn').innerText = 'Stop'; document.getElementById('micBtn').style.background = '#dc2626'; } catch(e){}
             }
         }
@@ -301,7 +268,6 @@
         }
 
         function newChat() {
-            stopAudio();
             var cc = document.getElementById('chatContainer');
             if(cc) cc.innerHTML = '<div id="welcomeScreen"><div class="gemini-card"><div class="center-star-box"><svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.4 9.6H22L15.8 14.2L18.2 21.8L12 17.2L5.8 21.8L8.2 14.2L2 9.6H9.6L12 2Z" fill="#ffffff"/></svg></div></div><h2 class="chamakdar" style="font-size: 16px;">Welcome to Ahsan Assistant AI</h2><p style="font-size: 12px; color: #94a3b8;">Kuch bhi puchiye, HD image banwaiye ya mic se boliye!</p></div>';
             toggleSidebar();
@@ -315,23 +281,14 @@
             }
         }
 
-        function stopAudio() {
-            var player = document.getElementById('ttsPlayer');
-            if(player) { player.pause(); player.currentTime = 0; }
-        }
-
         function speak(text) {
-            stopAudio();
-            var clean = text.replace(/<[^>]*>?/gm, '').replace(/[*#_`~[\]()]/g, ' ').trim();
-            if(!clean) return;
-
             var player = document.getElementById('ttsPlayer');
             if(player) {
-                var audioUrl = "https://api.streamelements.com/kappa/v2/speech?voice=Aditi&text=" + encodeURIComponent(clean);
-                player.src = audioUrl;
-                player.play().catch(function(err){
-                    console.log("Audio stream blocked:", err);
-                });
+                player.pause();
+                var clean = text.replace(/<[^>]*>?/gm, '').replace(/[*#_`~[\]()]/g, ' ').trim();
+                if(!clean) return;
+                player.src = "https://api.streamelements.com/kappa/v2/speech?voice=Aditi&text=" + encodeURIComponent(clean);
+                player.play().catch(function(e){});
             }
         }
 
@@ -393,54 +350,9 @@
                 return;
             }
 
-            var loadId = appendMsg('Thinking...', 'ai');
-
-            if(lower.indexOf('kaun') !== -1 || lower.indexOf('kisne') !== -1 || lower.indexOf('banaya') !== -1) {
-                setTimeout(function() {
-                    var lEl = document.getElementById(loadId);
-                    if(lEl) lEl.remove();
-                    var reply = getLocalReply(text);
-                    var formattedText = reply.replace(/(Ahsan)/gi, '<span class="chamakdar">$1</span>');
-                    appendMsg(formattedText, 'ai', true, reply);
-                }, 400);
-                return;
-            }
-
-            fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Authorization": "Bearer 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",
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "model": "openrouter/auto",
-                    "messages": [
-                        { 
-                            "role": "system", 
-                            "content": "You are Ahsan Assistant AI. Whenever anyone asks who created you or who made you, you must reply precisely without any emojis: 'Mujhe banaye hai Ahsan bhai Telkathu ke rahne wale ne, unhone hi mujhe 16 October 2026 me banaye the.' Reply warmly in clear Hindi or Hinglish." 
-                        },
-                        { "role": "user", "content": text }
-                    ]
-                })
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                var lEl = document.getElementById(loadId);
-                if(lEl) lEl.remove();
-                if(data.choices && data.choices[0]) {
-                    var reply = data.choices[0].message.content;
-                    var formattedText = reply.replace(/\n/g, '<br>').replace(/(Ahsan)/gi, '<span class="chamakdar">$1</span>');
-                    appendMsg(formattedText, 'ai', true, reply);
-                } else {
-                    var fallback = getLocalReply(text);
-                    appendMsg(fallback, 'ai', false, fallback);
-                }
-            }).catch(function() {
-                var lEl = document.getElementById(loadId);
-                if(lEl) lEl.remove();
-                var fallback = getLocalReply(text);
-                appendMsg(fallback, 'ai', false, fallback);
-            });
+            var reply = getLocalReply(text);
+            var formattedText = reply.replace(/(Ahsan)/gi, '<span class="chamakdar">$1</span>');
+            appendMsg(formattedText, 'ai', true, reply);
         }
 
         function appendMsg(text, sender, isHtml, speechText) {
@@ -456,11 +368,7 @@
                 var rawText = speechText || text.replace(/<[^>]*>?/gm, '');
                 div.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 12px; width: 100%; gap: 6px;';
                 
-                var titleHeader = '<div class="ai-title-header">' +
-                                    '<div class="mini-star"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.4 9.6H22L15.8 14.2L18.2 21.8L12 17.2L5.8 21.8L8.2 14.2L2 9.6H9.6L12 2Z" fill="#ffffff"/></svg></div>' +
-                                    '<span style="font-size: 11px; color: #22d3ee; font-weight: bold;">Ahsan Assistant AI</span>' +
-                                  '</div>';
-
+                var titleHeader = '<div style="font-size: 11px; color: #22d3ee; font-weight: bold;">Ahsan Assistant AI</div>';
                 var contentBody = '<div style="color: #e2e8f0; font-size: 13px; padding-left: 4px; width: 100%; line-height: 1.4;">' + (isHtml ? text : text.replace(/\n/g, '<br>')) + '</div>';
                 
                 var cleanAttrText = rawText.replace(/['"\\]/g, ' ');
@@ -470,4 +378,14 @@
             }
 
             cc.appendChild(div);
-            cc.scrollTop = cc.scrollHeight
+            cc.scrollTop = cc.scrollHeight;
+            return id;
+        }
+
+        window.onload = function() {
+            var saved = localStorage.getItem('chat_history');
+            if(saved) { try { historyList = JSON.parse(saved); renderHistory(); } catch(e){} }
+        };
+    </script>
+</body>
+    </html>
