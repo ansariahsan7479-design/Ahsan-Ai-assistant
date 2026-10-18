@@ -95,15 +95,28 @@
             border: 2px solid rgba(129, 140, 248, 0.4);
             border-radius: 28px;
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
-            padding-bottom: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
         }
 
-        .side-box { width: 36px; height: 36px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); }
-        .center-star-box { width: 46px; height: 46px; background: #ffffff; border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(56, 189, 248, 0.8); margin: 0 12px; animation: geminiFloat 3s infinite ease-in-out; }
-        @keyframes geminiFloat { 0% { transform: translateY(0px) scale(0.9); } 50% { transform: translateY(-8px) scale(1.1); } 100% { transform: translateY(0px) scale(0.9); } }
+        .center-star-box { 
+            width: 60px; 
+            height: 60px; 
+            background: linear-gradient(135deg, #38bdf8, #c084fc, #f472b6); 
+            border-radius: 18px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.9); 
+            animation: geminiFloat 2s infinite ease-in-out; 
+        }
+
+        @keyframes geminiFloat { 
+            0% { transform: translateY(0px) scale(0.95) rotate(0deg); } 
+            50% { transform: translateY(-10px) scale(1.1) rotate(5deg); } 
+            100% { transform: translateY(0px) scale(0.95) rotate(0deg); } 
+        }
         
         .chamakdar { background: linear-gradient(to right, #38bdf8, #c084fc, #f472b6); -webkit-background-clip: text; color: transparent; font-weight: 800; }
 
@@ -209,12 +222,9 @@
     <div id="chatContainer" class="chat-container">
         <div id="welcomeScreen">
             <div class="gemini-card">
-                <div class="side-box"></div>
                 <div class="center-star-box">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 0C12 6.62742 6.62742 12 0 12C6.62742 12 12 17.3726 12 24C12 17.3726 17.3726 12 24 12C17.3726 12 12 6.62742 12 0Z" fill="url(#g)"/></svg>
-                    <defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#38BDF8"/><stop offset="0.5" stop-color="#818CF8"/><stop offset="1" stop-color="#F472B6"/></linearGradient></defs>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.4 9.6H22L15.8 14.2L18.2 21.8L12 17.2L5.8 21.8L8.2 14.2L2 9.6H9.6L12 2Z" fill="#ffffff"/></svg>
                 </div>
-                <div class="side-box"></div>
             </div>
 
             <h2 class="chamakdar" style="font-size: 16px;">Welcome to Ahsan Assistant AI</h2>
@@ -270,7 +280,7 @@
         function newChat() {
             stopAudio();
             var cc = document.getElementById('chatContainer');
-            if(cc) cc.innerHTML = '<div id="welcomeScreen"><div class="gemini-card"><div class="side-box"></div><div class="center-star-box"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 0C12 6.62742 6.62742 12 0 12C6.62742 12 12 17.3726 12 24C12 17.3726 17.3726 12 24 12C17.3726 12 12 6.62742 12 0Z" fill="url(#g)"/></svg></div><div class="side-box"></div></div><h2 class="chamakdar" style="font-size: 16px;">Welcome to Ahsan Assistant AI</h2><p style="font-size: 12px; color: #94a3b8;">Kuch bhi puchiye, HD image banwaiye ya mic se boliye!</p></div>';
+            if(cc) cc.innerHTML = '<div id="welcomeScreen"><div class="gemini-card"><div class="center-star-box"><svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.4 9.6H22L15.8 14.2L18.2 21.8L12 17.2L5.8 21.8L8.2 14.2L2 9.6H9.6L12 2Z" fill="#ffffff"/></svg></div></div><h2 class="chamakdar" style="font-size: 16px;">Welcome to Ahsan Assistant AI</h2><p style="font-size: 12px; color: #94a3b8;">Kuch bhi puchiye, HD image banwaiye ya mic se boliye!</p></div>';
             toggleSidebar();
         }
 
@@ -420,7 +430,7 @@
                 div.innerHTML = '<div style="background-color: #1e293b; color: #f1f5f9; padding: 10px 14px; border-radius: 16px; max-width: 85%; font-size: 13px; border: 1px solid #334155;">' + text + '</div>';
             } else {
                 var rawText = speechText || text.replace(/<[^>]*>?/gm, '');
-                div.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 12px; width: 100%; gap: 6px;';
+                div.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 12px;width: 100%; gap: 6px;';
                 
                 var contentHtml = '<div style="font-size: 11px; color: #22d3ee; font-weight: bold;">Ahsan Assistant AI</div>' +
                                   '<div style="color: #e2e8f0; font-size: 13px; padding-left: 4px; width: 100%; line-height: 1.4;">' + (isHtml ? text : text.replace(/\n/g, '<br>')) + '</div>';
