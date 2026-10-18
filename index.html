@@ -166,7 +166,7 @@
             background: #1e293b;
             border: 1px solid #334155;
             color: #38bdf8;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 8px;
             font-size: 11px;
             cursor: pointer;
@@ -229,7 +229,7 @@
         var recognition = null;
         var isRec = false;
         var historyList = [];
-        var synth = window.speechSynthesis;
+        var currentAudio = null;
 
         function toggleSidebar() {
             var s = document.getElementById('sidebar');
@@ -254,7 +254,7 @@
             }
             if(isRec) { recognition.stop(); stopRecUI(); }
             else {
-                if(synth) synth.cancel();
+                if(currentAudio) { currentAudio.pause(); currentAudio = null; }
                 try { recognition.start(); isRec = true; document.getElementById('micBtn').innerText = 'Stop'; document.getElementById('micBtn').style.background = '#dc2626'; } catch(e){}
             }
         }
@@ -266,7 +266,7 @@
         }
 
         function newChat() {
-            if(synth) synth.cancel();
+            if(currentAudio) { currentAudio.pause(); currentAudio = null; }
             var cc = document.getElementById('chatContainer');
             if(cc) cc.innerHTML = '<div id="welcomeScreen"><div class="gemini-card"><div class="side-box"></div><div class="center-star-box"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 0C12 6.62742 6.62742 12 0 12C6.62742 12 12 17.3726 12 24C12 17.3726 17.3726 12 24 12C17.3726 12 12 6.62742 12 0Z" fill="url(#g)"/></svg></div><div class="side-box"></div></div><h2 class="chamakdar" style="font-size: 16px;">Welcome to Ahsan Assistant AI</h2><p style="font-size: 12px; color: #94a3b8;">Kuch bhi puchiye, HD image banwaiye ya mic se boliye!</p></div>';
             toggleSidebar();
@@ -281,24 +281,12 @@
         }
 
         function speak(text) {
-            if(!synth) return;
-            synth.cancel();
-            
-            var clean = text
-                .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDDFF])/g, '')
-                .replace(/<[^>]*>?/gm, '')
-                .replace(/[*#_`~[\]()]/g, ' ')
-                .replace(/bnaye/gi, 'banaaye')
-                .replace(/Telkathu/gi, 'Tel kathu')
-                .replace(/\s+/g, ' ')
-                .trim();
-
+            if(currentAudio) { currentAudio.pause(); currentAudio = null; }
+            var clean = text.replace(/<[^>]*>?/gm, '').replace(/[*#_`~[\]()]/g, ' ').trim();
             if(!clean) return;
-
-            var u = new SpeechSynthesisUtterance(clean);
-            u.lang = 'hi-IN';
-            u.rate = 0.95;
-            synth.speak(u);
+            var url = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(clean) + "&tl=hi&client=tw-ob";
+            currentAudio = new Audio(url);
+            currentAudio.play().catch(function(){});
         }
 
         function renderHistory() {
@@ -421,7 +409,6 @@
                 var contentHtml = '<div style="font-size: 11px; color: #22d3ee; font-weight: bold;">Ahsan Assistant AI</div>' +
                                   '<div style="color: #e2e8f0; font-size: 13px; padding-left: 4px; width: 100%; line-height: 1.4;">' + (isHtml ? text : text.replace(/\n/g, '<br>')) + '</div>';
                 
-                // Gemini-style Listen / Speak Button
                 contentHtml += '<button class="speak-btn" onclick="speak(\`' + rawText.replace(/'/g, "\\'") + '\`)">🔊 Suniye</button>';
                 
                 div.innerHTML = contentHtml;
@@ -437,4 +424,4 @@
         };
     </script>
 </body>
-</html>
+    </html>
