@@ -190,36 +190,28 @@
             font-weight: bold;
         }
 
-        /* Continuous Left to Right Floating Logo Animation inside Chat Header */
-        .header-logo-container {
-            width: 100%;
-            position: relative;
-            height: 24px;
-            overflow: hidden;
-        }
-        .moving-star-logo {
-            position: absolute;
-            top: 0;
-            left: 0;
+        /* Safe CSS-based Floating Logo Header */
+        .ai-title-header {
             display: flex;
             align-items: center;
             gap: 6px;
-            animation: moveLogo 4s infinite ease-in-out alternate;
+            margin-bottom: 4px;
         }
-        @keyframes moveLogo {
-            0% { transform: translateX(0px) scale(0.9); }
-            50% { transform: translateX(120px) scale(1.1); }
-            100% { transform: translateX(220px) scale(0.9); }
-        }
-        .mini-star-icon {
-            width: 18px;
-            height: 18px;
+        .mini-star {
+            width: 16px;
+            height: 16px;
             background: linear-gradient(135deg, #38bdf8, #f472b6);
-            border-radius: 6px;
+            border-radius: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 10px #38bdf8;
+            box-shadow: 0 0 8px #38bdf8;
+            animation: miniGlow 1.8s infinite ease-in-out;
+        }
+        @keyframes miniGlow {
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.15); box-shadow: 0 0 12px #f472b6; }
+            100% { transform: scale(0.9); }
         }
     </style>
 </head>
@@ -457,6 +449,7 @@
             var id = 'msg-' + Date.now();
             var div = document.createElement('div');
             div.id = id;
+
             if(sender === 'user') {
                 div.style.cssText = 'display: flex; justify-content: flex-end; margin-bottom: 12px;';
                 div.innerHTML = '<div style="background-color: #1e293b; color: #f1f5f9; padding: 10px 14px; border-radius: 16px; max-width: 85%; font-size: 13px; border: 1px solid #334155;">' + text + '</div>';
@@ -464,10 +457,17 @@
                 var rawText = speechText || text.replace(/<[^>]*>?/gm, '');
                 div.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 12px; width: 100%; gap: 6px;';
                 
-                var contentHtml = '<div class="header-logo-container">' +
-                                    '<div class="moving-star-logo">' +
-                                        '<div class="mini-star-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.4 9.6H22L15.8 14.2L18.2 21.8L12 17.2L5.8 21.8L8.2 14.2L2 9.6H9.6L12 2Z" fill="#ffffff"/></svg></div>' +
-                                        '<span style="font-size: 11px; color: #22d3ee; font-weight: bold;">Ahsan Assistant AI</span>' +
-                                    '</div>' +
-                                  '</div>' +
-                                  '<div style="color: #e2e8f0; font-size: 13px; padding-left: 4px; width: 100%; line-height: 1.
+                var titleHeader = '<div class="ai-title-header">' +
+                                    '<div class="mini-star"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.4 9.6H22L15.8 14.2L18.2 21.8L12 17.2L5.8 21.8L8.2 14.2L2 9.6H9.6L12 2Z" fill="#ffffff"/></svg></div>' +
+                                    '<span style="font-size: 11px; color: #22d3ee; font-weight: bold;">Ahsan Assistant AI</span>' +
+                                  '</div>';
+
+                var contentBody = '<div style="color: #e2e8f0; font-size: 13px; padding-left: 4px; width: 100%; line-height: 1.4;">' + (isHtml ? text : text.replace(/\n/g, '<br>')) + '</div>';
+                
+                var cleanAttrText = rawText.replace(/['"\\]/g, ' ');
+                var speakBtn = '<button class="speak-btn" onclick="speak(\'' + cleanAttrText + '\')">🔊 Suniye</button>';
+                
+                div.innerHTML = titleHeader + contentBody + speakBtn;
+            }
+
+            cc.appendChil
