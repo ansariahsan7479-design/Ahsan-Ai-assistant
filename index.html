@@ -176,9 +176,17 @@
             gap: 6px;
             font-weight: bold;
         }
+        .speak-btn:active {
+            background: #0891b2;
+            color: #ffffff;
+        }
     </style>
+    <!-- ResponsiveVoice Engine for Mobile WebViews -->
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
 </head>
 <body>
+
+    <audio id="ttsAudio" style="display:none;"></audio>
 
     <div id="overlay" class="overlay hidden" onclick="toggleSidebar()"></div>
     <div id="sidebar" class="sidebar">
@@ -230,7 +238,6 @@
         var recognition = null;
         var isRec = false;
         var historyList = [];
-        var currentAudio = null;
 
         function toggleSidebar() {
             var s = document.getElementById('sidebar');
@@ -241,7 +248,7 @@
 
         function toggleVoice() {
             var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if(!SR) { alert('Voice not supported'); return; }
+            if(!SR) { alert('Voice input not supported in this WebView'); return; }
             if(!recognition) {
                 recognition = new SR();
                 recognition.lang = 'hi-IN';
@@ -255,7 +262,7 @@
             }
             if(isRec) { recognition.stop(); stopRecUI(); }
             else {
-                if(currentAudio) { currentAudio.pause(); currentAudio = null; }
+                stopSpeech();
                 try { recognition.start(); isRec = true; document.getElementById('micBtn').innerText = 'Stop'; document.getElementById('micBtn').style.background = '#dc2626'; } catch(e){}
             }
         }
@@ -267,7 +274,7 @@
         }
 
         function newChat() {
-            if(currentAudio) { currentAudio.pause(); currentAudio = null; }
+            stopSpeech();
             var cc = document.getElementById('chatContainer');
             if(cc) cc.innerHTML = '<div id="welcomeScreen"><div class="gemini-card"><div class="side-box"></div><div class="center-star-box"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 0C12 6.62742 6.62742 12 0 12C6.62742 12 12 17.3726 12 24C12 17.3726 17.3726 12 24 12C17.3726 12 12 6.62742 12 0Z" fill="url(#g)"/></svg></div><div class="side-box"></div></div><h2 class="chamakdar" style="font-size: 16px;">Welcome to Ahsan Assistant AI</h2><p style="font-size: 12px; color: #94a3b8;">Kuch bhi puchiye, HD image banwaiye ya mic se boliye!</p></div>';
             toggleSidebar();
@@ -281,13 +288,30 @@
             }
         }
 
+        function stopSpeech() {
+            if(window.responsiveVoice) { window.responsiveVoice.cancel(); }
+            var audioEl = document.getElementById('ttsAudio');
+            if(audioEl) { audioEl.pause(); audioEl.currentTime = 0; }
+        }
+
         function speak(text) {
-            if(currentAudio) { currentAudio.pause(); currentAudio = null; }
+            stopSpeech();
             var clean = text.replace(/<[^>]*>?/gm, '').replace(/[*#_`~[\]()]/g, ' ').trim();
             if(!clean) return;
-            var url = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(clean) + "&tl=hi&client=tw-ob";
-            currentAudio = new Audio(url);
-            currentAudio.play().catch(function(){});
+
+            // 1. Try ResponsiveVoice engine first
+            if(window.responsiveVoice && window.responsiveVoice.speak) {
+                window.responsiveVoice.speak(clean, "Hindi Female", {rate: 0.95});
+                return;
+            }
+
+            // 2. Fallback to HTML5 audio stream
+            var audioEl = document.getElementById('ttsAudio');
+            if(audioEl) {
+                var url = "https://api.streamelements.com/kappa/v2/speech?voice=Aditi&text=" + encodeURIComponent(clean);
+                audioEl.src = url;
+                audioEl.play().catch(function(e){ console.log("Audio play error", e); });
+            }
         }
 
         function renderHistory() {
@@ -422,8 +446,4 @@
 
         window.onload = function() {
             var saved = localStorage.getItem('chat_history');
-            if(saved) { try { historyList = JSON.parse(saved); renderHistory(); } catch(e){} }
-        };
-    </script>
-</body>
-</html>
+            if(saved) { try { histor
