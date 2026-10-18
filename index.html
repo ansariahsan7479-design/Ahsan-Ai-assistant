@@ -176,17 +176,11 @@
             gap: 6px;
             font-weight: bold;
         }
-        .speak-btn:active {
-            background: #0891b2;
-            color: #ffffff;
-        }
     </style>
-    <!-- ResponsiveVoice Engine for Mobile WebViews -->
-    <script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
 </head>
 <body>
 
-    <audio id="ttsAudio" style="display:none;"></audio>
+    <audio id="ttsPlayer" style="display:none;"></audio>
 
     <div id="overlay" class="overlay hidden" onclick="toggleSidebar()"></div>
     <div id="sidebar" class="sidebar">
@@ -248,7 +242,7 @@
 
         function toggleVoice() {
             var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if(!SR) { alert('Voice input not supported in this WebView'); return; }
+            if(!SR) { alert('Mic permission or Web Speech API not supported.'); return; }
             if(!recognition) {
                 recognition = new SR();
                 recognition.lang = 'hi-IN';
@@ -262,7 +256,7 @@
             }
             if(isRec) { recognition.stop(); stopRecUI(); }
             else {
-                stopSpeech();
+                stopAudio();
                 try { recognition.start(); isRec = true; document.getElementById('micBtn').innerText = 'Stop'; document.getElementById('micBtn').style.background = '#dc2626'; } catch(e){}
             }
         }
@@ -274,7 +268,7 @@
         }
 
         function newChat() {
-            stopSpeech();
+            stopAudio();
             var cc = document.getElementById('chatContainer');
             if(cc) cc.innerHTML = '<div id="welcomeScreen"><div class="gemini-card"><div class="side-box"></div><div class="center-star-box"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 0C12 6.62742 6.62742 12 0 12C6.62742 12 12 17.3726 12 24C12 17.3726 17.3726 12 24 12C17.3726 12 12 6.62742 12 0Z" fill="url(#g)"/></svg></div><div class="side-box"></div></div><h2 class="chamakdar" style="font-size: 16px;">Welcome to Ahsan Assistant AI</h2><p style="font-size: 12px; color: #94a3b8;">Kuch bhi puchiye, HD image banwaiye ya mic se boliye!</p></div>';
             toggleSidebar();
@@ -288,29 +282,23 @@
             }
         }
 
-        function stopSpeech() {
-            if(window.responsiveVoice) { window.responsiveVoice.cancel(); }
-            var audioEl = document.getElementById('ttsAudio');
-            if(audioEl) { audioEl.pause(); audioEl.currentTime = 0; }
+        function stopAudio() {
+            var player = document.getElementById('ttsPlayer');
+            if(player) { player.pause(); player.currentTime = 0; }
         }
 
         function speak(text) {
-            stopSpeech();
+            stopAudio();
             var clean = text.replace(/<[^>]*>?/gm, '').replace(/[*#_`~[\]()]/g, ' ').trim();
             if(!clean) return;
 
-            // 1. Try ResponsiveVoice engine first
-            if(window.responsiveVoice && window.responsiveVoice.speak) {
-                window.responsiveVoice.speak(clean, "Hindi Female", {rate: 0.95});
-                return;
-            }
-
-            // 2. Fallback to HTML5 audio stream
-            var audioEl = document.getElementById('ttsAudio');
-            if(audioEl) {
-                var url = "https://api.streamelements.com/kappa/v2/speech?voice=Aditi&text=" + encodeURIComponent(clean);
-                audioEl.src = url;
-                audioEl.play().catch(function(e){ console.log("Audio play error", e); });
+            var player = document.getElementById('ttsPlayer');
+            if(player) {
+                var audioUrl = "https://api.streamelements.com/kappa/v2/speech?voice=Aditi&text=" + encodeURIComponent(clean);
+                player.src = audioUrl;
+                player.play().catch(function(err){
+                    console.log("Audio stream blocked:", err);
+                });
             }
         }
 
@@ -347,12 +335,15 @@
             var input = document.getElementById('userInput');
             var text = input.value.trim();
             if(!text) return;
+
             var wel = document.getElementById('welcomeScreen');
             if(wel) wel.remove();
+
             historyList.unshift(text);
             if(historyList.length > 10) historyList.pop();
             localStorage.setItem('chat_history', JSON.stringify(historyList));
             renderHistory();
+
             appendMsg(text, 'user');
             input.value = '';
 
@@ -370,7 +361,7 @@
             }
 
             var loadId = appendMsg('Thinking...', 'ai');
-            
+
             if(lower.indexOf('kaun') !== -1 || lower.indexOf('kisne') !== -1 || lower.indexOf('banaya') !== -1) {
                 setTimeout(function() {
                     var lEl = document.getElementById(loadId);
@@ -434,8 +425,8 @@
                 var contentHtml = '<div style="font-size: 11px; color: #22d3ee; font-weight: bold;">Ahsan Assistant AI</div>' +
                                   '<div style="color: #e2e8f0; font-size: 13px; padding-left: 4px; width: 100%; line-height: 1.4;">' + (isHtml ? text : text.replace(/\n/g, '<br>')) + '</div>';
                 
-                var escapedText = rawText.replace(/['"\\]/g, '');
-                contentHtml += '<button class="speak-btn" onclick="speak(\'' + escapedText + '\')">🔊 Suniye</button>';
+                var cleanAttrText = rawText.replace(/['"\\]/g, ' ');
+                contentHtml += '<button class="speak-btn" onclick="speak(\'' + cleanAttrText + '\')">🔊 Suniye</button>';
                 
                 div.innerHTML = contentHtml;
             }
@@ -446,4 +437,8 @@
 
         window.onload = function() {
             var saved = localStorage.getItem('chat_history');
-            if(saved) { try { histor
+            if(saved) { try { historyList = JSON.parse(saved); renderHistory(); } catch(e){} }
+        };
+    </script>
+</body>
+    </html>
