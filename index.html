@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -161,6 +161,20 @@
             background-color: rgba(0, 0, 0, 0.7);
             z-index: 40;
         }
+
+        .speak-btn {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #38bdf8;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
     </style>
 </head>
 <body>
@@ -216,11 +230,6 @@
         var isRec = false;
         var historyList = [];
         var synth = window.speechSynthesis;
-
-        // Force speech engine initialize
-        if (synth && synth.onvoiceschanged !== undefined) {
-            synth.onvoiceschanged = function() { synth.getVoices(); };
-        }
 
         function toggleSidebar() {
             var s = document.getElementById('sidebar');
@@ -289,12 +298,6 @@
             var u = new SpeechSynthesisUtterance(clean);
             u.lang = 'hi-IN';
             u.rate = 0.95;
-            u.pitch = 1.0;
-
-            var voices = synth.getVoices();
-            var hindiVoice = voices.find(function(v) { return v.lang.includes('hi') || v.lang.includes('IN'); });
-            if(hindiVoice) u.voice = hindiVoice;
-
             synth.speak(u);
         }
 
@@ -347,23 +350,21 @@
                     var lEl = document.getElementById(loadId);
                     if(lEl) lEl.remove();
                     var url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(text) + "?width=1024&height=1024&nologo=true&enhance=true";
-                    appendMsg('Yeh lijiye aapki HD image:<br><br><img src="' + url + '" style="border-radius: 12px; width: 100%; border: 1px solid #334155;">', 'ai', true);
-                    speak("Yeh lijiye aapki HD image taiyar hai!");
+                    var imgHtml = 'Yeh lijiye aapki HD image:<br><br><img src="' + url + '" style="border-radius: 12px; width: 100%; border: 1px solid #334155;">';
+                    appendMsg(imgHtml, 'ai', true, "Yeh lijiye aapki HD image taiyar hai!");
                 }, 1500);
                 return;
             }
 
             var loadId = appendMsg('Thinking...', 'ai');
             
-            // Check for direct questions
             if(lower.indexOf('kaun') !== -1 || lower.indexOf('kisne') !== -1 || lower.indexOf('banaya') !== -1) {
                 setTimeout(function() {
                     var lEl = document.getElementById(loadId);
                     if(lEl) lEl.remove();
                     var reply = getLocalReply(text);
                     var formattedText = reply.replace(/(Ahsan)/gi, '<span class="chamakdar">$1</span>');
-                    appendMsg(formattedText, 'ai', true);
-                    speak(reply);
+                    appendMsg(formattedText, 'ai', true, reply);
                 }, 400);
                 return;
             }
@@ -392,23 +393,20 @@
                 if(data.choices && data.choices[0]) {
                     var reply = data.choices[0].message.content;
                     var formattedText = reply.replace(/\n/g, '<br>').replace(/(Ahsan)/gi, '<span class="chamakdar">$1</span>');
-                    appendMsg(formattedText, 'ai', true);
-                    speak(reply);
+                    appendMsg(formattedText, 'ai', true, reply);
                 } else {
                     var fallback = getLocalReply(text);
-                    appendMsg(fallback, 'ai');
-                    speak(fallback);
+                    appendMsg(fallback, 'ai', false, fallback);
                 }
             }).catch(function() {
                 var lEl = document.getElementById(loadId);
                 if(lEl) lEl.remove();
                 var fallback = getLocalReply(text);
-                appendMsg(fallback, 'ai');
-                speak(fallback);
+                appendMsg(fallback, 'ai', false, fallback);
             });
         }
 
-        function appendMsg(text, sender, isHtml) {
+        function appendMsg(text, sender, isHtml, speechText) {
             var cc = document.getElementById('chatContainer');
             var id = 'msg-' + Date.now();
             var div = document.createElement('div');
@@ -417,8 +415,16 @@
                 div.style.cssText = 'display: flex; justify-content: flex-end; margin-bottom: 12px;';
                 div.innerHTML = '<div style="background-color: #1e293b; color: #f1f5f9; padding: 10px 14px; border-radius: 16px; max-width: 85%; font-size: 13px; border: 1px solid #334155;">' + text + '</div>';
             } else {
+                var rawText = speechText || text.replace(/<[^>]*>?/gm, '');
                 div.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 12px; width: 100%; gap: 6px;';
-                div.innerHTML = '<div style="font-size: 11px; color: #22d3ee; font-weight: bold;">Ahsan Assistant AI</div><div style="color: #e2e8f0; font-size: 13px; padding-left: 4px; width: 100%; line-height: 1.4;">' + (isHtml ? text : text.replace(/\n/g, '<br>')) + '</div>';
+                
+                var contentHtml = '<div style="font-size: 11px; color: #22d3ee; font-weight: bold;">Ahsan Assistant AI</div>' +
+                                  '<div style="color: #e2e8f0; font-size: 13px; padding-left: 4px; width: 100%; line-height: 1.4;">' + (isHtml ? text : text.replace(/\n/g, '<br>')) + '</div>';
+                
+                // Gemini-style Listen / Speak Button
+                contentHtml += '<button class="speak-btn" onclick="speak(\`' + rawText.replace(/'/g, "\\'") + '\`)">🔊 Suniye</button>';
+                
+                div.innerHTML = contentHtml;
             }
             cc.appendChild(div);
             cc.scrollTop = cc.scrollHeight;
@@ -431,4 +437,4 @@
         };
     </script>
 </body>
-            </html>
+</html>
